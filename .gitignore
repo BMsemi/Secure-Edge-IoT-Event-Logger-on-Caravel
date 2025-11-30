@@ -16,3 +16,29 @@
 # macOS Finder metadata
 .DS_Store
 **/.DS_Store
+# OpenLane generated files
+openlane/*/runs/
+openlane/*/logs/
+openlane/*/reports/
+openlane/*/tmp/
+openlane/*/pdn/
+openlane/*/results/
+openlane/*/*.gds
+openlane/*/*.lef
+openlane/.venv/
+
+# Signoff artifacts
+signoff/
+spef/
+lef/
+lib/
+gds/
+sdf/
+
+# General
+*.log
+*.rpt
+*.csv
+*.sdf
+*.spef
+caravel_original/
