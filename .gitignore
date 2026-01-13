@@ -73,3 +73,5 @@ verilog/dv/caravel/
 .venv/
 .venv/
 venv-cocotb/
+.venv/
+venv-cocotb/
