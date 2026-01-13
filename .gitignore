@@ -71,3 +71,5 @@ temp_secure_logger/
 temp_secure_logger/
 verilog/dv/caravel/
 .venv/
+.venv/
+venv-cocotb/
