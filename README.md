@@ -174,7 +174,8 @@ Even under:
 - Loss of connectivity  
 
 ---
-
+!![secure_logger_customer_story_slide](https://github.com/user-attachments/assets/7fd3dc35-3350-41a3-98a9-f76038e1988c)
+---
 ##  Energy Strategy: Perovskite Solar Integration
 
 The device operates in real environments such as:
