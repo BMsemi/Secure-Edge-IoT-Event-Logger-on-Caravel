@@ -4,9 +4,9 @@ Name Project:Secure Logger Controller – ReRAM-Based Medical Event Logger
 
 ---
 **Designer:** Juan Carlos Aquino Hernández
----
+
 **Institution:** Universidad Tecnológica de Nayarit (UTNAY)
----
+
 **Contributor:**  Samarth Jainabout
 ---
 
