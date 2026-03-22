@@ -175,7 +175,7 @@ Intermittent operation is enabled through printed **perovskite solar cells** tha
 
 * Neuromorphic ReRAM IP: [Neuromorphic X1 documentation](https://github.com/BMsemi/Neuromorphic_X1_32x32)
 * Caravel User Project and Wrapper: [Caravel user project docs](https://caravel-user-project.readthedocs.io)
-* NVM Power‑Up contest details: [ChipFoundry BM Labs NVM challenge](https://chipfoundry.io/challenges/bmlabs)
+* Contest details: [ChipFoundry Application Design Contest](https://chipfoundry.io/challenges/application)
 
 ---
 
