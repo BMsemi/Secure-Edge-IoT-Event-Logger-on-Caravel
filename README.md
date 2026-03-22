@@ -1,103 +1,92 @@
-Name Project:Secure Logger Controller – ReRAM-Based Medical Event Logger
----
-**ChipFoundry BM Labs NVM Power-Up Design Contest Submission**  
+# Secure Logger Controller – ReRAM‑Based Medical Event Logger
 
-**Designer:** Juan Carlos Aquino Hernández
-
-**Institution:** Universidad Tecnológica de Nayarit (UTNAY)
-
-**Contributor:**  Samarth Jainabout  
+**ChipFoundry BM Labs NVM Power‑Up Design Contest Submission**  
+Designed for the [ChipFoundry BM Labs application challenge](https://chipfoundry.io/challenges/application), this project implements a secure, low‑power medical event logger on the **Caravel** platform.  
+It combines BM Labs’ **Neuromorphic ReRAM NVM** with a custom secure logging controller to guarantee data persistence and integrity for critical medical events—even under unexpected power loss.
 
 ---
 
 ## Project Overview
 
-This project implements a secure, low-power Medical Event Logger SoC on the Caravel platform, integrating BM Labs’ Neuromorphic ReRAM NVM (Neuromorphic_X1) and a custom Secure Logger Controller. The design guarantees data persistence and integrity for critical medical events even under unexpected power loss, enabling robust edge logging in wearable or portable devices.
+This repository contains the RTL, integration scripts and documentation for a **Secure Logger Controller** that augments the open‑source [Caravel](https://github.com/efabless/caravel) System‑on‑Chip with non‑volatile event logging.  
+The design is targeted at medical wearables and edge devices where power is intermittent and an authenticated audit trail of events is essential.
 
----
+Key components include:
+
+* **Secure Logger Controller:** Validates, encrypts and writes event payloads to ReRAM.
+* **Neuromorphic ReRAM NVM (Neuromorphic_X1):** A non‑volatile memory macro that retains data through power cycles.
+* **Caravel Chip Zone:** Provides the Wishbone bus, GPIO and IRQ infrastructure to control and observe the logger.
+
 ---
 
 ## Key Innovation Points
 
-- **Fail-Safe Persistent Logging:** Medical events are validated, encrypted, and safely logged to non-volatile ReRAM, surviving power interruptions.  
-- **Error Detection via CRC-8:** A hardware CRC-8 engine validates sensor events before any write, rejecting corrupted data.  
-- **Secure Event Writes (AES-style Encryption):** Event payloads are encrypted (AES-style block, currently modeled as AES-XOR for RTL simulation) before being written to NVM.  
-- **Caravel + Neuromorphic_X1 Integration:** Fully integrated with Caravel’s user project wrapper and BM Labs’ Neuromorphic_X1_wb macro through a 32-bit Wishbone bus.
+* **Fail‑safe persistent logging:** sensor events are validated, encrypted and written to non‑volatile memory. Data survives power interruptions.
+* **Error detection via CRC‑8:** every event is checked with a CRC‑8 polynomial (0x07). Corrupted events are rejected.
+* **Secure writes:** event payloads are encrypted using a 128‑bit AES‑style block (implemented as XOR for simulation) before storage.
+* **Tight integration:** the logger, ReRAM macro and Caravel infrastructure share a standard 32‑bit Wishbone bus plus GPIO/IRQ lines for easy verification and tape‑out.
 
 ---
 
 ## Technical Highlights
 
-| Metric                        | Target / Behavior                         | Description                                                  |
-|-------------------------------|-------------------------------------------|--------------------------------------------------------------|
-| Event Data Width              | 8-bit sensor events                       | Simple, low-bandwidth medical events (vital samples, flags). |
-| Integrity Check               | CRC-8 (poly 0x07)                         | On-chip CRC computed for each event before committing.       |
-| Encryption Block              | 128-bit AES-style block (modeled as XOR) | Event embedded in 128-bit word and encrypted with key.       |
-| Power-Failure Handling        | Fails closed (fail flag asserted)         | Any power_fail condition blocks writes and sets error flag.  |
-| Caravel Integration           | Wishbone + GPIO + IRQ                    | Logger controlled via Wishbone and observable via GPIO/IRQ.  |
+| Metric                     | Target / Behaviour                        | Description                                                  |
+|---------------------------|-------------------------------------------|--------------------------------------------------------------|
+| **Event data width**      | 8‑bit sensor events                      | Simple, low‑bandwidth medical samples or flags.              |
+| **Integrity check**       | CRC‑8 (poly 0x07)                        | On‑chip CRC computed before committing an event.             |
+| **Encryption block**      | 128‑bit AES‑style block (modeled as XOR) | Event embedded in 128‑bit word and encrypted with a key.     |
+| **Power‑failure handling**| Fails closed (fail flag asserted)         | Any power‑fail condition blocks writes and sets an error flag.|
+| **Caravel integration**   | Wishbone + GPIO + IRQ                    | Logger controlled via Wishbone and observable via GPIO/IRQ.  |
 
 ---
 
-## Architecture
-![Arquitectura](https://github.com/user-attachments/assets/5bf1885d-a2a1-470f-8a1d-809667c5cd96)
+## Getting Started
 
-
-
-System-level block diagram showing integration of:
-
-- **Caravel Management SoC (RISC-V core)** providing Wishbone control, debug and system management.  
-- **Secure Logger Controller (CRC-8 + AES)** validating sensor events, encrypting payloads, and generating status/IRQ.  
-- **Neuromorphic ReRAM NVM (BM Labs Neuromorphic_X1_wb)** used as non-volatile storage and analog in-memory compute macro, connected via 32-bit Wishbone and analog bias pins.
-
-All IPs communicate through the standard **32-bit Wishbone Bus**, with GPIO and Logic Analyzer lines used to inject sensor events, CRC references, power-fail test signals, and to observe encrypted outputs and status flags.
-
----
-1. **Clone the Repository:**
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Juan-AquinoH/secure_logger_controller.git
-cd secure_logger_controller
-
+git clone https://github.com/BMsemi/Secure-Edge-IoT-Event-Logger-on-Caravel.git
+cd Secure-Edge-IoT-Event-Logger-on-Caravel
 ```
----
-2. **Prepare Your Environment:**
----
+
+### 2. Prepare Your Environment
+
+Install the required Caravel harness, management core, OpenLane and SKY130 PDK support:
 
 ```bash
 make setup
 ```
 
-This installs the Caravel-lite harness, management core, OpenLane, and SKY130 PDK support needed for hardening.
-
-### 3. Install ChipFoundry IPM and Neuromorphic_X1 IP
-
+### 3. Install ChipFoundry IPM and Neuromorphic X1 IP
 
 ```bash
 pip install cf-ipm
 ipm install Neuromorphic_X1_32x32
 ```
 
-### 4. Install the Neuromorphic X1 IP
+After installation, replace the behavioural model in the IP directory:
+
 ```bash
-Replace folder hdl inside ip/Neuromorphic_X1_32x32/hdl with folder hdl_replace_inside_ip
-Rename hdl_replace_inside_ip inside ip/Neuromorphic_X1_32x32/ with hdl
+cd ip/Neuromorphic_X1_32x32
+mv hdl hdl_original
+mv hdl_replace_inside_ip hdl
+# rename supporting folders
+mv gdss gds
+mv leff lef
+mv libb lib
 ```
 
-### 5. Edit Behavioral Model Name in IP
-```bash
-Rename folders
-gdss with gds
-leff with lef
-libb with lib
-```
+### 4. Run Testbenches
 
-6. **Run Testbenches:**
+Use Cocotb to verify correct operation of the logger controller and ReRAM interface:
 
 ```bash
 make cocotb-verify-ram_word-rtl
 ```
 
-7. **Harden the Design:**
+### 5. Harden the Design
+
+Generate the physical implementation of the user project wrapper using OpenLane:
 
 ```bash
 make user_project_wrapper
@@ -105,167 +94,80 @@ make user_project_wrapper
 
 ---
 
-## Application: Secure, Fail-Safe Medical Logging
+## Application Scenarios
 
-This design targets **medical wearables and edge devices** where:
+### Secure, Fail‑Safe Medical Logging
 
-- Power is intermittent (battery-operated, energy harvesting, remote sensors).  
-- Event data (heart-rate anomalies, threshold crossings, alarms) must never be silently lost.  
-- Security and integrity are mandatory (encrypted event trail with CRC validation).  
+This IP targets **medical wearables** and **edge sensors** where:
 
-It is also suitable for **industrial safety black-box logging** and **ultra-low-power edge monitoring** in harsh environments.
-#  Secure Logger IP
+* Power is intermittent (battery‑operated or energy harvesting).
+* Events such as heart‑rate anomalies, glucose threshold crossings or respiratory alarms must never be silently lost.
+* An encrypted, auditable history of events is required.
 
-##  IP Description
+It is also suitable for **industrial safety black‑box logging** and **ultra‑low‑power edge monitoring** in harsh environments.
 
-**Secure Logger IP** is an ultra-low-power, hardware-based event logging core designed for medical wearables and edge IoT systems operating under intermittent power and unreliable connectivity.
+### Secure Logger IP Description
 
-It guarantees that **critical events are never lost**, preserving data across power failures, resets, and communication gaps.
-
----
-
-##  Customer Story: Secure Adherence Cap
-
-
-!![customer_facing_secure_adherence_cap (4)](https://github.com/user-attachments/assets/f4a2480d-6cf8-4012-881a-b97f233e0e41)
-
-
-A familiar product that looks like a normal cap but behaves like a trusted dose tracker.
-
-After each use:
-- A local event is recorded
-- Data is stored in non-volatile memory
-- No continuous connectivity is required
-
-On user interaction (NFC tap):
-- Last dose taken  
-- Adherence history  
-- Freshness / storage status  
-
-###  Key Value
-
-- Data survives power loss  
-- Secure and tamper-proof history  
-- No cloud dependency required  
-
----
-##  pcb layout explaining how solar cell connects  the project  
-
-!![Perovskia_Solar_FPC](https://github.com/user-attachments/assets/b187f2a0-1f40-4930-83c2-6fc8196bf80c)
-
-
-**“The clinical memory inside every patch.”**
-
-Designed for devices where losing data is unacceptable.
-
-The system preserves critical events such as:
-- Arrhythmia episodes and symptom markers  
-- Glucose threshold crossings and alarms  
-- Respiratory deterioration flags  
-
-Even under:
-- Low battery  
-- Device resets  
-- Loss of connectivity
-    
-##  Final Product Story: Medical Wearable Logger
----
-!![secure_logger_customer_story_slide](https://github.com/user-attachments/assets/7fd3dc35-3350-41a3-98a9-f76038e1988c)
----
-##  Energy Strategy: Perovskite Solar Integration
-
-The device operates in real environments such as:
-- Medicine cabinets  
-- Bathrooms  
-- Indoor lighting conditions  
-
-###  Benefits
-
-- Printed perovskite solar cells conform to caps or wearable patches  
-- Continuous low-power energy harvesting  
-- Energy stored for short NFC communication bursts  
-
-###  Result
-
-- No always-on wireless required  
-- Maintenance-free operation  
-- Optimized for intermittent usage patterns  
+**Secure Logger IP** is an ultra‑low‑power hardware event‑logging core. It guarantees that **critical events are never lost**, preserving data across power failures, resets and communication gaps. Events are captured through an event interface, validated and encrypted, then committed to ReRAM. An NFC interface allows authenticated reads by tapping a phone.
 
 ---
 
-##  IP Architecture
+## Customer Story: Secure Adherence Cap
 
-- Event Capture Interface  
-- Secure Logging Controller  
-- NVM Interface (ReRAM)  
-- Cryptographic Validation Unit  
-- NFC Communication Interface  
-- Power Management Controller  
+The Secure Logger platform can power smart packaging. The **Secure Adherence Cap** looks like a normal cap but behaves like a trusted dose diary. After each use, the cap or dock stores a local event record and later returns a simple phone‑tap view: last dose, adherence history and freshness status.
 
----
+![Secure Adherence Cap](docs/assets/secure_adherence_cap.png)
 
-##  Ecosystem & Sponsors
+**Key value:**
 
-This project is developed within the **BM Labs / ChipFoundry ecosystem**, enabling rapid prototyping of secure, ultra-low-power silicon solutions.
-
-###  BM Labs / ChipFoundry
-
-- Platform for IP-to-silicon innovation  
-- Integration into Caravel-based SoCs  
-- Focus on NVM and secure edge architectures  
-- Supports design, validation, and tapeout readiness  
-
-###  Semiconductor Platform
-
-- Caravel / OpenLane flow  
-- Sky130 PDK compatibility  
-- RTL-to-GDS implementation  
-
-###  Energy Innovation Layer
-
-- Perovskite solar integration  
-- Flexible photovoltaic for wearables  
+* **Non‑volatile record** survives power interruptions.
+* **Validated + encrypted history** available via NFC.
+* **Visible perovskite solar insert** functions under cabinet/bathroom light.
 
 ---
 
-##  Use Case Summary
+## Energy Strategy: Perovskite Solar Integration
 
-| Feature                  | Value Delivered              |
-|--------------------------|-----------------------------|
-| Non-volatile logging     | No data loss                |
-| Secure encryption        | Trusted, auditable records  |
-| NFC interface            | Simple user interaction     |
-| Energy harvesting ready  | Battery independence        |
-| Event-driven design      | Ultra-low power operation   |
+Intermittent operation is enabled through printed **perovskite solar cells** that conform to caps or wearable patches. Energy is harvested continuously under typical indoor lighting, stored in a thin‑film cell or supercapacitor, and used for short NFC bursts. Stable power rails and a burst buffer ensure reliable operation of the Caravel ASIC and ReRAM macro.
+
+![Perovskite Solar Integration](docs/assets/perovskia_energy_architecture.png)
+
+### Benefits
+
+* Continuous low‑power energy harvesting from indoor light.
+* No always‑on wireless required—energy is saved for NFC bursts.
+* Maintenance‑free operation optimized for intermittent usage.
 
 ---
 
-##  Tagline
+## Use Case Summary
 
-**Secure Logger IP → Never lose the moment that matters**
+| Feature                 | Value Delivered             |
+|-------------------------|-----------------------------|
+| Non‑volatile logging    | No data loss                |
+| Secure encryption       | Trusted, auditable records  |
+| NFC interface           | Simple user interaction     |
+| Energy harvesting ready | Battery independence        |
+| Event‑driven design     | Ultra‑low‑power operation   |
+
 ---
 
 ## Why This Design Wins
 
-**Innovation:**  
-Combines BM Labs’ Neuromorphic ReRAM NVM with a secure logging pipeline: CRC-8 integrity checks plus AES-style encryption, rather than treating NVM as just passive storage.
-
-**Practicality:**  
-A compact, well-partitioned architecture that reuses Caravel’s existing bus, GPIO, and IRQ infrastructure for control and observability, easing verification and tapeout integration.
-
-**Differentiation:**  
-Where typical Caravel user projects log or process data in volatile SRAM, this design provides **non-volatile, integrity-checked and encrypted event storage**, aligned with safety-critical medical and edge requirements.
+* **Innovation:** Combines Neuromorphic ReRAM NVM with a secure logging pipeline—CRC‑8 integrity checks and AES‑style encryption—rather than treating NVM as passive storage.
+* **Practicality:** Compact, well‑partitioned architecture that reuses Caravel’s existing bus, GPIO and IRQ infrastructure for control and observability, easing verification and tape‑out integration.
+* **Differentiation:** Typical Caravel user projects log or process data in volatile SRAM; this design provides **non‑volatile, integrity‑checked and encrypted event storage**, aligned with safety‑critical medical and edge requirements.
 
 ---
 
 ## Documentation
 
-- Neuromorphic ReRAM IP: [Neuromorphic X1 documentation](https://github.com/BMsemi/Neuromorphic_X1_32x32) [web:1]  
-- Caravel User Project and Wrapper Requirements: [Caravel User Project docs](https://caravel-user-project.readthedocs.io) [web:5]  
-- NVM Power-Up Contest details: [ChipFoundry BM Labs NVM Challenge](https://chipfoundry.io/challenges/bmlabs) [web:6]
+* Neuromorphic ReRAM IP: [Neuromorphic X1 documentation](https://github.com/BMsemi/Neuromorphic_X1_32x32)
+* Caravel User Project and Wrapper: [Caravel user project docs](https://caravel-user-project.readthedocs.io)
+* NVM Power‑Up contest details: [ChipFoundry BM Labs NVM challenge](https://chipfoundry.io/challenges/bmlabs)
 
 ---
 
 ## License
 
-This project is licensed under the **Apache 2.0** License – see the `LICENSE` file for full terms.
+This project is licensed under the **Apache 2.0** License – see the `LICENSE` file for full terms.
