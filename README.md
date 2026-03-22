@@ -24,6 +24,7 @@ Key components include:
 * **Fail‑safe persistent logging:** sensor events are validated, encrypted and written to non‑volatile memory. Data survives power interruptions.
 * **Error detection via CRC‑8:** every event is checked with a CRC‑8 polynomial (0x07). Corrupted events are rejected.
 * **Secure writes:** event payloads are encrypted using a 128‑bit AES‑style block (implemented as XOR for simulation) before storage.
+* **TMR voter support for fault tolerance:** a Triple Modular Redundancy (TMR) voting stage improves resilience by masking a single transient fault in replicated safety‑critical logic.
 * **Tight integration:** the logger, ReRAM macro and Caravel infrastructure share a standard 32‑bit Wishbone bus plus GPIO/IRQ lines for easy verification and tape‑out.
 
 ---
@@ -36,6 +37,7 @@ Key components include:
 | **Integrity check**       | CRC‑8 (poly 0x07)                        | On‑chip CRC computed before committing an event.             |
 | **Encryption block**      | 128‑bit AES‑style block (modeled as XOR) | Event embedded in 128‑bit word and encrypted with a key.     |
 | **Power‑failure handling**| Fails closed (fail flag asserted)         | Any power‑fail condition blocks writes and sets an error flag.|
+| **TMR voter logic**       | Majority vote across 3 replicas          | Masks one transient fault in safety‑critical decision logic. |
 | **Caravel integration**   | Wishbone + GPIO + IRQ                    | Logger controlled via Wishbone and observable via GPIO/IRQ.  |
 
 ---
@@ -110,6 +112,19 @@ It is also suitable for **industrial safety black‑box logging** and **ultra‑
 
 **Secure Logger IP** is an ultra‑low‑power hardware event‑logging core. It guarantees that **critical events are never lost**, preserving data across power failures, resets and communication gaps. Events are captured through an event interface, validated and encrypted, then committed to ReRAM. An NFC interface allows authenticated reads by tapping a phone.
 
+### Why TMR Voter Logic Helps in Medical Applications
+
+A **Triple Modular Redundancy (TMR) voter** improves reliability by running the same safety‑critical decision path three times and selecting the majority result. If one replica is disturbed by a transient fault, switching noise, timing upset, or a soft error, the other two replicas can outvote it and keep the system response correct.
+
+That behavior is especially useful for medical and health‑adjacent devices because these systems must avoid silent corruption of alarms, dose records, event flags, or exception handling states. In this design context, TMR strengthens trust in the logging path by helping the controller continue making the correct write or reject decision even when a single internal fault occurs.
+
+In practice, that makes the architecture better suited to medical applications because it supports:
+
+* **Higher fault tolerance** for safety‑critical control logic.
+* **More reliable event logging** when a single transient error occurs.
+* **Lower risk of false writes or missed events**, which matters for adherence tracking and patient monitoring.
+* **More predictable fail‑safe behavior**, which is important for regulated and safety‑oriented products.
+
 ---
 
 ## Customer Story: Secure Adherence Cap
@@ -154,9 +169,9 @@ Intermittent operation is enabled through printed **perovskite solar cells** tha
 
 ## Why This Design Wins
 
-* **Innovation:** Combines Neuromorphic ReRAM NVM with a secure logging pipeline—CRC‑8 integrity checks and AES‑style encryption—rather than treating NVM as passive storage.
+* **Innovation:** Combines Neuromorphic ReRAM NVM with a secure logging pipeline—CRC‑8 integrity checks, AES‑style encryption, and TMR‑based fault masking—rather than treating NVM as passive storage.
 * **Practicality:** Compact, well‑partitioned architecture that reuses Caravel’s existing bus, GPIO and IRQ infrastructure for control and observability, easing verification and tape‑out integration.
-* **Differentiation:** Typical Caravel user projects log or process data in volatile SRAM; this design provides **non‑volatile, integrity‑checked and encrypted event storage**, aligned with safety‑critical medical and edge requirements.
+* **Differentiation:** Typical Caravel user projects log or process data in volatile SRAM; this design provides **non‑volatile, integrity‑checked, fault‑tolerant, and encrypted event storage**, aligned with safety‑critical medical and edge requirements.
 
 ---
 
