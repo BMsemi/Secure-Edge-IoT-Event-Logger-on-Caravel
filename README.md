@@ -3,51 +3,61 @@
 </p>
 
 <p align="center">
-  <a href="https://perovskia.solar/"><strong>Perovskia</strong></a> — custom printed perovskite solar cells for harvesting indoor and outdoor light in low-power devices.<br>
-  <a href="https://bmsemi.io/"><strong>BM Labs</strong></a> — neuromorphic and ReRAM-focused semiconductor IP for low-power edge and embedded systems.
+  <a href="https://perovskia.solar/"><strong>Perovskia</strong></a> — customizable printed perovskite solar cells for indoor and outdoor energy harvesting.<br>
+  <a href="https://bmsemi.io/"><strong>BM Labs</strong></a> — neuromorphic and in-memory-compute semiconductor IP, including the Neuromorphic X1 macro used in this design.
 </p>
 
-# Secure Logger Controller – ReRAM‑Based Medical Event Logger
+# Secure Logger Controller – ReRAM-Based Medical Event Logger
 
-**ChipFoundry BM Labs NVM Power‑Up Design Contest Submission**  
+**ChipFoundry Application Design Contest Submission**  
+Designed for the [ChipFoundry Application Design Contest](https://chipfoundry.io/challenges/application), this project is a complete reference-design concept for a secure, low-power medical event logger on the **Caravel** platform. It combines BM Labs’ **Neuromorphic ReRAM NVM** with a custom secure logging controller to preserve critical medical events under power loss, intermittent connectivity, and safety-critical operating conditions.
+
 **Designer:** Juan Carlos Aquino Hernández  
-**Institution:** Universidad Tecnológica de Nayarit (UTNAY)  
-Designed for the [ChipFoundry BM Labs application challenge](https://chipfoundry.io/challenges/application), this project implements a secure, low‑power medical event logger on the **Caravel** platform.  
-It combines BM Labs’ **Neuromorphic ReRAM NVM** with a custom secure logging controller to guarantee data persistence and integrity for critical medical events—even under unexpected power loss.
+**Institution:** Universidad Tecnológica de Nayarit (UTNAY)
 
 ---
 
 ## Project Overview
 
-This repository contains the RTL, integration scripts and documentation for a **Secure Logger Controller** that augments the open‑source [Caravel](https://github.com/efabless/caravel) System‑on‑Chip with non‑volatile event logging.  
-The design is targeted at medical wearables and edge devices where power is intermittent and an authenticated audit trail of events is essential.
+This repository contains the RTL, integration scripts, and documentation for a **Secure Logger Controller** that augments the open-source [Caravel](https://github.com/efabless/caravel) System-on-Chip with non-volatile medical-event logging.
 
-Key components include:
+The design is aimed at applications where medical data must remain trustworthy even when:
 
-* **Secure Logger Controller:** Validates, encrypts and writes event payloads to ReRAM.
-* **Neuromorphic ReRAM NVM (Neuromorphic_X1):** A non‑volatile memory macro that retains data through power cycles.
-* **Caravel Chip Zone:** Provides the Wishbone bus, GPIO and IRQ infrastructure to control and observe the logger.
+- power is intermittent,
+- connectivity is unavailable,
+- device handling must be auditable, or
+- radiation exposure can disturb digital state.
+
+Key platform blocks include:
+
+- **Secure Logger Controller:** validates, encrypts, and writes medical-event payloads.
+- **Neuromorphic ReRAM NVM (Neuromorphic_X1):** retains event history through power cycles.
+- **Caravel Chip Zone:** provides the Wishbone bus, GPIO, and IRQ infrastructure for control and observability.
+- **Selective TMR hardening:** protects the critical logging path for radiation-tolerant medical workflows.
 
 ---
 
 ## Key Innovation Points
 
-* **Fail‑safe persistent logging:** sensor events are validated, encrypted and written to non‑volatile memory. Data survives power interruptions.
-* **Error detection via CRC‑8:** every event is checked with a CRC‑8 polynomial (0x07). Corrupted events are rejected.
-* **Secure writes:** event payloads are encrypted using a 128‑bit AES‑style block (implemented as XOR for simulation) before storage.
-* **Tight integration:** the logger, ReRAM macro and Caravel infrastructure share a standard 32‑bit Wishbone bus plus GPIO/IRQ lines for easy verification and tape‑out.
+- **Fail-safe persistent logging:** sensor or therapy events are validated, encrypted, and stored in non-volatile memory so records survive resets and power interruptions.
+- **Error detection via CRC-8:** every event is checked with a CRC-8 polynomial (0x07) before commit.
+- **Secure writes:** payloads are packed into a 128-bit AES-style block (currently modeled as XOR for RTL simulation) before storage.
+- **Selective Triple Modular Redundancy (TMR):** critical logging-path state can be triplicated with majority voting to mask radiation-induced upsets without changing the external product behavior.
+- **Complete application fit:** the architecture supports silicon, packaging, NFC-based user interaction, and indoor-light energy harvesting in a practical medical product concept.
 
 ---
 
 ## Technical Highlights
 
-| Metric                     | Target / Behaviour                        | Description                                                  |
-|---------------------------|-------------------------------------------|--------------------------------------------------------------|
-| **Event data width**      | 8‑bit sensor events                      | Simple, low‑bandwidth medical samples or flags.              |
-| **Integrity check**       | CRC‑8 (poly 0x07)                        | On‑chip CRC computed before committing an event.             |
-| **Encryption block**      | 128‑bit AES‑style block (modeled as XOR) | Event embedded in 128‑bit word and encrypted with a key.     |
-| **Power‑failure handling**| Fails closed (fail flag asserted)         | Any power‑fail condition blocks writes and sets an error flag.|
-| **Caravel integration**   | Wishbone + GPIO + IRQ                    | Logger controlled via Wishbone and observable via GPIO/IRQ.  |
+| Metric | Target / Behavior | Description |
+|---|---|---|
+| **Event data width** | 8-bit sensor / status events | Low-bandwidth medical samples, flags, handling events, or dose-state indicators. |
+| **Integrity check** | CRC-8 (poly 0x07) | On-chip CRC computed before committing an event. |
+| **Encryption block** | 128-bit AES-style block (modeled as XOR) | Event embedded in a 128-bit word and encrypted with a key. |
+| **Power-failure handling** | Fails closed (fail flag asserted) | Any power-fail condition blocks writes and sets an error flag. |
+| **Caravel integration** | Wishbone + GPIO + IRQ | Logger controlled via Wishbone and observable via GPIO / IRQ. |
+| **TMR hardening** | Triplicated critical state + voter | Masks a single upset in the protected logging path. |
+| **Energy strategy** | Indoor-light harvesting ready | Suitable for short NFC bursts and low-duty-cycle medical logging. |
 
 ---
 
@@ -62,20 +72,20 @@ cd Secure-Edge-IoT-Event-Logger-on-Caravel
 
 ### 2. Prepare Your Environment
 
-Install the required Caravel harness, management core, OpenLane and SKY130 PDK support:
+Install the required Caravel harness, management core, OpenLane, and SKY130 PDK support:
 
 ```bash
 make setup
 ```
 
-### 3. Install ChipFoundry IPM and Neuromorphic X1 IP
+### 3. Install ChipFoundry IPM and Neuromorphic X1 IP
 
 ```bash
 pip install cf-ipm
 ipm install Neuromorphic_X1_32x32
 ```
 
-After installation, replace the behavioural model in the IP directory:
+After installation, replace the behavioral model in the IP directory:
 
 ```bash
 cd ip/Neuromorphic_X1_32x32
@@ -107,78 +117,114 @@ make user_project_wrapper
 
 ## Application Scenarios
 
-### Secure, Fail‑Safe Medical Logging
+### Secure, Fail-Safe Medical Logging
 
-This IP targets **medical wearables** and **edge sensors** where:
+This IP targets medical and clinical products where local truth matters:
 
-* Power is intermittent (battery‑operated or energy harvesting).
-* Events such as heart‑rate anomalies, glucose threshold crossings or respiratory alarms must never be silently lost.
-* An encrypted, auditable history of events is required.
+- **Medication adherence devices** that must record the last dose taken and adherence history.
+- **Medical wearables** that must preserve alarms, threshold crossings, and symptom markers.
+- **Smart therapeutic packaging** that must provide a tamper-evident handling log.
+- **Radiation-tolerant clinical accessories** that must keep trustworthy records near radioactive therapies.
 
-It is also suitable for **industrial safety black‑box logging** and **ultra‑low‑power edge monitoring** in harsh environments.
+It is also suitable for industrial safety black-box logging and other ultra-low-power edge-monitoring applications.
 
 ### Secure Logger IP Description
 
-**Secure Logger IP** is an ultra‑low‑power hardware event‑logging core. It guarantees that **critical events are never lost**, preserving data across power failures, resets and communication gaps. Events are captured through an event interface, validated and encrypted, then committed to ReRAM. An NFC interface allows authenticated reads by tapping a phone.
+**Secure Logger IP** is an ultra-low-power hardware event-logging core. It guarantees that critical events are never silently lost, preserving data across power failures, resets, and communication gaps. Events are captured locally, validated, encrypted, and committed to ReRAM. NFC provides a simple authenticated readout path for phones, readers, or clinical tools.
 
 ---
 
 ## Customer Story: Secure Adherence Cap
 
-The Secure Logger platform can power smart packaging. The **Secure Adherence Cap** looks like a normal cap but behaves like a trusted dose diary. After each use, the cap or dock stores a local event record and later returns a simple phone‑tap view: last dose, adherence history and freshness status.
+The Secure Logger platform can power smart packaging. The **Secure Adherence Cap** looks like a normal cap but behaves like a trusted dose diary. After each use, the cap or dock stores a local event record and later returns a simple phone-tap view: last use, adherence history, and freshness / storage status.
 
-![Secure Adherence Cap](docs/assets/secure_adherence_cap.png)
+![Secure Adherence Cap](docs/assets/secure_adherence_cap.png)
 
 **Key value:**
 
-* **Non‑volatile record** survives power interruptions.
-* **Validated + encrypted history** available via NFC.
-* **Visible perovskite solar insert** functions under cabinet/bathroom light.
+- **Non-volatile record** survives power interruptions.
+- **Validated + encrypted history** is available through NFC.
+- **Indoor-light energy harvesting** supports maintenance-friendly operation.
+
+---
+
+## Secure Adherence Cap – Nuclear Medicine Edition
+
+**Secure Adherence Cap – Nuclear Medicine Edition** is a radiation-tolerant smart cap for radioactive therapies such as **I-131 treatment**. It keeps the original secure-logger architecture intact — local event capture, encrypted non-volatile history, NFC readout, and indoor-light energy harvesting — but adds **TMR** to harden the critical logging path against radiation-induced upsets.
+
+The result is a trusted dose diary and chain-of-custody logger for **earth-based radiation-oncology and nuclear-medicine workflows**.
+
+### What TMR does here
+
+**Triple Modular Redundancy (TMR)** means the most critical logging logic is implemented three times, and a **majority voter** decides the final result. If radiation flips one copy of the state or control path, the other two copies still agree, so the system can continue logging correctly.
+
+In this design, TMR is intended for the **critical logging path**, such as:
+
+- write-enable / commit decisions,
+- event-valid and status-state tracking,
+- key control state in the secure logger FSM,
+- error and fail-safe signaling that must remain trustworthy.
+
+This keeps the architecture practical: the product remains compact and low power, while the most safety-relevant logic gets extra protection.
+
+### Why TMR matters for medical use
+
+TMR helps this product serve multiple medical needs with a single secure-logger platform:
+
+| Medical need | Example product / workflow | Value of Secure Logger + TMR |
+|---|---|---|
+| **Radiation-tolerant dose logging** | I-131 therapy cap / container | Preserves dose and handling history even when radiation can upset digital state. |
+| **Medication adherence** | Daily oral therapy smart cap | Maintains a trusted last-dose and adherence diary without depending on the cloud. |
+| **Clinical chain of custody** | Pharmacy-to-patient or ward-to-home handoff | Records openings, handoffs, and events in encrypted non-volatile memory. |
+| **Storage / freshness verification** | Light- or time-sensitive therapies | Logs status checks and makes them available over NFC at the point of care. |
+| **Wearable medical event logging** | Cardiac, glucose, or respiratory edge devices | Keeps local alerts and event markers persistent across low-power interruptions. |
 
 ---
 
 ## Energy Strategy: Perovskite Solar Integration
 
-Intermittent operation is enabled through printed **perovskite solar cells** that conform to caps or wearable patches. Energy is harvested continuously under typical indoor lighting, stored in a thin‑film cell or supercapacitor, and used for short NFC bursts. Stable power rails and a burst buffer ensure reliable operation of the Caravel ASIC and ReRAM macro.
+Intermittent operation is enabled through printed **perovskite solar cells** that conform to caps or wearable patches. Energy is harvested under indoor lighting, stored in a thin-film cell or supercapacitor, and used for short NFC bursts. Stable rails and burst buffering help keep the Caravel ASIC and ReRAM macro operational in realistic medical usage.
 
-![Perovskite Solar Integration](docs/assets/perovskia_energy_architecture.png)
+![Perovskite Solar Integration](docs/assets/perovskia_energy_architecture.png)
 
 ### Benefits
 
-* Continuous low‑power energy harvesting from indoor light.
-* No always‑on wireless required—energy is saved for NFC bursts.
-* Maintenance‑free operation optimized for intermittent usage.
+- Continuous low-power energy harvesting from indoor light.
+- No always-on wireless required — energy is saved for short NFC bursts.
+- Maintenance-friendly operation optimized for intermittent usage.
 
 ---
 
 ## Use Case Summary
 
-| Feature                 | Value Delivered             |
-|-------------------------|-----------------------------|
-| Non‑volatile logging    | No data loss                |
-| Secure encryption       | Trusted, auditable records  |
-| NFC interface           | Simple user interaction     |
-| Energy harvesting ready | Battery independence        |
-| Event‑driven design     | Ultra‑low‑power operation   |
+| Feature | Value Delivered |
+|---|---|
+| Non-volatile logging | No silent data loss |
+| Secure encryption | Trusted, auditable records |
+| NFC interface | Simple clinician / patient interaction |
+| Energy harvesting ready | Reduced battery dependence |
+| Selective TMR hardening | Better tolerance to radiation-induced upsets |
+| Event-driven design | Ultra-low-power operation |
 
 ---
 
-## Why This Design Wins
+## Why This Design Fits the Application Contest
 
-* **Innovation:** Combines Neuromorphic ReRAM NVM with a secure logging pipeline—CRC‑8 integrity checks and AES‑style encryption—rather than treating NVM as passive storage.
-* **Practicality:** Compact, well‑partitioned architecture that reuses Caravel’s existing bus, GPIO and IRQ infrastructure for control and observability, easing verification and tape‑out integration.
-* **Differentiation:** Typical Caravel user projects log or process data in volatile SRAM; this design provides **non‑volatile, integrity‑checked and encrypted event storage**, aligned with safety‑critical medical and edge requirements.
+- **Complete system story:** this is not only a chip block; it maps naturally to a deployable smart medical product with silicon, packaging, NFC interaction, and energy harvesting.
+- **Real medical relevance:** the same secure-logger core can address medication adherence, nuclear medicine, wearable event logging, and clinical chain-of-custody needs.
+- **Practical reliability strategy:** CRC, encryption, fail-safe behavior, non-volatile memory, and selective TMR together make the design more compelling for safety-sensitive workflows.
+- **Open-source reproducibility:** the architecture is compatible with Caravel-based prototyping and a documented open-source integration flow.
 
 ---
 
 ## Documentation
 
-* Neuromorphic ReRAM IP: [Neuromorphic X1 documentation](https://github.com/BMsemi/Neuromorphic_X1_32x32)
-* Caravel User Project and Wrapper: [Caravel user project docs](https://caravel-user-project.readthedocs.io)
-* Contest details: [ChipFoundry Application Design Contest](https://chipfoundry.io/challenges/application)
+- Neuromorphic ReRAM IP: [Neuromorphic X1 documentation](https://github.com/BMsemi/Neuromorphic_X1_32x32)
+- Caravel User Project and Wrapper: [Caravel user project docs](https://caravel-user-project.readthedocs.io)
+- Contest details: [ChipFoundry Application Design Contest](https://chipfoundry.io/challenges/application)
 
 ---
 
 ## License
 
-This project is licensed under the **Apache 2.0** License – see the `LICENSE` file for full terms.
+This project is licensed under the **Apache 2.0** License — see the `LICENSE` file for full terms.
